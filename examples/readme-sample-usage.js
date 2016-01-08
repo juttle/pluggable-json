@@ -1,14 +1,3 @@
-# Pluggable JSON
-
-PluggableJSON lets you serialize (to JSON) and deserialize objects and arrays with values that are otherwise not serializable to JSON. This means you can now serialize values like `Infinity`, `NaN`, and your own objects to send over HTTP or websockets. PluggableJSON works by accepting pluggable serializers to handle these special values.
-
-## Getting started
-```
-$ npm install pluggable-json
-```
-
-## Sample usage
-```javascript
 /*eslint-disable no-console */
 import PluggableJSON from "pluggable-json";
 
@@ -89,33 +78,3 @@ console.log(`aDuration: ${deserializedPayload.aDuration.toString()}`);
 
 console.log(`Deserialized Infinity is equal to Infinity: ${deserializedPayload.anInfinityValue === Infinity}`);
 // Deserialized Infinity is equal to Infinity: true
-```
-
-## API
-
-### new PluggableJSON(serializers [, separator])
-Instantiate a new `PluggableJSON` object with an array of serializers and an optional separator. The separator defaults to `:` and is used in encoding object properties and array values. If `:` is a commonly occurring string in your field names, specify a different separator.
-
-### serialize(value [, options])
-Serializes the given object or array to JSON, using the passed in `serializers` where applicable.
-
-Options:
- - `toObject` (defaults to `false`): If `true` is passed, returns an object that can be safely passed to `JSON.stringify`.
-
-### deserialize(value)
-Deserializes the given JSON (or parsed object/array) and returns the original object or array with everything "hydrated."
-
-## Custom Serializers
-Each custom serializer is an object that must implement the following properties.
-
-### type
-This property specifies the value `type` that this serializer serializes. The type is used in serializing and deserializing to keep track of which value is which type. The `type` must be unique across all `serializers` passed into the constructor.
-
-### isSerializable(value)
-A function that accepts a value and returns whether this serializer can serialize it. This check should be as strict as possible so the serializer doesn't end up serializing another serializer's value. For example, if serializing an instance of a class, you can use `instanceof`.
-
-### serialize(value)
-Given a value, return the serialized string value.
-
-### deserialize(value)
-Given a serialized string, return the deserialized object.

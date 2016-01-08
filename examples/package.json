@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "pluggable-json": "github:juttle/pluggable-json"
+  }
+}
