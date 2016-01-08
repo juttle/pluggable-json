@@ -1,6 +1,6 @@
 # Pluggable JSON
 
-[![Build Status](https://travis-ci.org/juttle/juttle.svg)](https://travis-ci.org/juttle/juttle)
+[![Build Status](https://travis-ci.org/juttle/pluggable-json.svg)](https://travis-ci.org/juttle/pluggable-json)
 
 PluggableJSON lets you serialize (to JSON) and deserialize objects and arrays with values that are otherwise not serializable to JSON. This means you can now serialize values like `Infinity`, `NaN`, and your own objects to send over HTTP or websockets. PluggableJSON works by accepting pluggable serializers to handle these special values.
 
