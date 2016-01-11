@@ -1,6 +1,6 @@
 {
   "name": "pluggable-json",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "PluggableJSON lets you serialize (to JSON) and deserialize objects and arrays with values that are otherwise not serializable to JSON.",
   "main": "lib/index.js",
   "keywords": [
