@@ -48,10 +48,15 @@ describe("Pluggable JSON", () => {
             number: 1,
             boolean: true,
             string: "string",
+            "str:ing": "str:ing", // separator in object key and value
             null: null,
             array: [1, true, {a: "a string"}],
             object: {
-                b: [1, "a"],
+                b: [
+                    1,
+                    "a",
+                    "ab:cc" // separator in array value
+                ],
                 c: 2
             }
         };
@@ -81,6 +86,14 @@ describe("Pluggable JSON", () => {
 
             before(() => {
                 pluggableJSON = new PluggableJSON([durationSerializer]);
+            });
+
+            it("':' is the default separator", () => {
+                let obj = {
+                    "myDuration": myDuration
+                };
+
+                expect(Object.keys(pluggableJSON.serialize(obj, { toObject: true } ))[0]).to.contain(":");
             });
 
             it("value in object", () => {
