@@ -71,9 +71,16 @@ class PluggableJSON {
     // "<serializer type><separator><serialized value>"
     serializeValueInArray(value) {
         let serializer = this.findSerializerForValue(value);
-        return serializer ?
-            `${this._escapeSeparators(serializer.type)}${this._separator}${this._escapeSeparators(serializer.serialize(value))}`
-            : this._serialize(value);
+
+        if (serializer) {
+            return `${this._escapeSeparators(serializer.type)}${this._separator}${this._escapeSeparators(serializer.serialize(value))}`;
+        }
+        else if (_.isString(value)) {
+            return this._escapeSeparators(value);
+        }
+        else {
+            return this._serialize(value);
+        }
     }
 
     // If a serializer exists, returns a serialized key and value
@@ -83,13 +90,19 @@ class PluggableJSON {
         let serializer = this.findSerializerForValue(value);
         return serializer ?
             [`${this._escapeSeparators(key)}${this._separator}${this._escapeSeparators(serializer.type)}`, serializer.serialize(value)]
-            : [key, this._serialize(value)];
+            : [this._escapeSeparators(key), this._serialize(value)];
     }
 
     deserializeValueInArray (value) {
-        if (_.isString(value) && value.search(this._nonEscapedSeparator) !== -1) {
-            let [fieldType, fieldValue] = this._getComponentsFromSerializedString(value);
-            return this._deserialize(fieldValue, fieldType);
+        if (_.isString(value)) {
+            let components = this._getComponentsFromSerializedString(value);
+            if (components.length === 1) {
+                return this._deserialize(components[0]);
+            }
+            else {
+                let [fieldType, fieldValue] = components;
+                return this._deserialize(fieldValue, fieldType);
+            }
         }
         else {
             return this._deserialize(value);
@@ -97,12 +110,14 @@ class PluggableJSON {
     }
 
     deserializeValueInObject (key, value) {
-        if (key.search(this._nonEscapedSeparator) !== -1) {
-            let [fieldName, fieldType] = this._getComponentsFromSerializedString(key);
-            return [fieldName,this._deserialize(value, fieldType)];
+        let components = this._getComponentsFromSerializedString(key);
+
+        if (components.length === 1) {
+            return [components[0], this._deserialize(value)];
         }
         else {
-            return [key, this._deserialize(value)];
+            let [fieldName, fieldType] = components;
+            return [fieldName,this._deserialize(value, fieldType)];
         }
     }
 
