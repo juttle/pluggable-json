@@ -2,6 +2,14 @@
 
 This file documents all notable changes to pluggable-json. The release numbering uses [semantic versioning](http://semver.org).
 
+## 0.1.4
+
+Released 2016-02-16
+
+### Bug Fixes
+
+- fix bug where separators in object keys and array values weren't being properly escaped. [[#4](https://github.com/juttle/pluggable-json/pull/4)]
+
 ## 0.1.3
 
 Released 2016-01-21
