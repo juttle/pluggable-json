@@ -49,20 +49,29 @@ describe("Pluggable JSON", () => {
             number: 1,
             boolean: true,
             string: "string",
-            "str:ing": "str:ing", // separator in object key and value
+            "str$ing": "str$ing", // separator in object key and value
             null: null,
             array: [1, true, {a: "a string"}],
             object: {
                 b: [
                     1,
                     "a",
-                    "ab:cc" // separator in array value
+                    "ab$cc" // separator in array value
                 ],
                 c: 2
             }
         };
 
         expect(serializeAndDeserialize(pluggableJSON, obj)).to.deep.equal(obj);
+    });
+
+    it("bare value", () => {
+        expect(serializeAndDeserialize(pluggableJSON, "string")).to.equal("string");
+        expect(serializeAndDeserialize(pluggableJSON, "str$ing")).to.equal("str$ing");
+        expect(serializeAndDeserialize(pluggableJSON, "$string")).to.equal("$string");
+        expect(serializeAndDeserialize(pluggableJSON, 1)).to.equal(1);
+        expect(serializeAndDeserialize(pluggableJSON, true)).to.equal(true);
+        expect(serializeAndDeserialize(pluggableJSON, null)).to.equal(null);
     });
 
     it("serialize to object", () => {
@@ -89,12 +98,16 @@ describe("Pluggable JSON", () => {
                 pluggableJSON = new PluggableJSON([durationSerializer]);
             });
 
-            it("':' is the default separator", () => {
+            it("'$' is the default separator", () => {
                 let obj = {
                     "myDuration": myDuration
                 };
 
-                expect(_.values(pluggableJSON.serialize(obj, { toObject: true } ))[0]).to.contain(":");
+                expect(_.values(pluggableJSON.serialize(obj, { toObject: true } ))[0]).to.contain("$");
+            });
+
+            it("bare value", () => {
+                expect(serializeAndDeserialize(pluggableJSON, myDuration).toString()).to.equal(myDuration.toString());
             });
 
             it("value in object", () => {
