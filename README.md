@@ -81,7 +81,7 @@ let serializedPayload = pluggableJSON.serialize(payload);
 
 // the string that can be sent across http or websockets
 console.log(`Serialized payload: ${serializedPayload}`);
-// Derialized payload: {"aDuration:duration":"10m","name":"pluggable json","anInfinityValue:infinity":"Infinity"}
+// Deserialized payload: Serialized payload: {"aDuration":"$duration$10m","name":"pluggable json","anInfinityValue":"$infinity$Infinity"}
 
 // Deserialize back into the real values
 let deserializedPayload = pluggableJSON.deserialize(serializedPayload);
