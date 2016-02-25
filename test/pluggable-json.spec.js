@@ -1,4 +1,5 @@
 import PluggableJSON from "../src";
+import _ from "underscore";
 import {expect} from "chai";
 
 const serializeAndDeserialize = (pluggableJSON, value) => {
@@ -93,7 +94,7 @@ describe("Pluggable JSON", () => {
                     "myDuration": myDuration
                 };
 
-                expect(Object.keys(pluggableJSON.serialize(obj, { toObject: true } ))[0]).to.contain(":");
+                expect(_.values(pluggableJSON.serialize(obj, { toObject: true } ))[0]).to.contain(":");
             });
 
             it("value in object", () => {
