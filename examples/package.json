@@ -1,5 +1,5 @@
 {
   "dependencies": {
-    "pluggable-json": "github:juttle/pluggable-json"
+    "pluggable-json": "file:../"
   }
 }

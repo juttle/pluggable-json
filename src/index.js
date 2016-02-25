@@ -6,7 +6,7 @@ const ESCAPE_CHAR = "^";
 const REQUIRED_SERIALIZER_PROPERTIES = ["type", "isSerializable", "serialize", "deserialize"];
 
 class PluggableJSON {
-    constructor(serializers = [], separator = ":") {
+    constructor(serializers = [], separator = "$") {
         this._validateSerializers(serializers);
 
         this._serializers = serializers.reduce((result, serializer) => {
@@ -27,36 +27,47 @@ class PluggableJSON {
         let serializer = this.findSerializerForValue(value);
 
         if (serializer) {
-            return serializer.serialize(value);
+            // returns <separator><serializer.type><separator><serialized value>
+            return this._separator + this._escapeSeparators(serializer.type) +
+                   this._separator + this._escapeSeparators(serializer.serialize(value));
         }
         else if (_.isArray(value)) {
             return value.map((item) => {
-                return this.serializeValueInArray(item);
+                return this._serialize(item);
             });
         }
         else if (_.isObject(value)) {
-            return _.object(_.pairs(value).map((pair) => {
-                return this.serializeValueInObject(pair[0], pair[1]);
-            }));
+            return _.mapObject(value, (propertyValue) => {
+                return this._serialize(propertyValue);
+            });
+        }
+        else if (_.isString(value)){
+            return this._escapeSeparators(value);
         }
         else {
             return value;
         }
     }
 
-    _deserialize(value, type) {
-        if (type) {
-            return this._serializers[type].deserialize(value);
+    _deserialize(value) {
+        if (_.isString(value)) {
+            let serializedComponents = this._getComponentsFromSerializedString(value);
+            if (serializedComponents.type === null) {
+                return serializedComponents.value;
+            }
+            else {
+                return this._serializers[serializedComponents.type].deserialize(serializedComponents.value);
+            }
         }
-        else if (_.isArray(value)) {
-            return value.map( (item) => {
-                return this.deserializeValueInArray(item);
+        else if(_.isArray(value)) {
+            return value.map((item) => {
+                return this._deserialize(item);
             });
         }
         else if (_.isObject(value)) {
-            return _.object(_.pairs(value).map((pair) => {
-                return this.deserializeValueInObject(pair[0], pair[1]);
-            }));
+            return _.mapObject(value, (propertyValue) => {
+                return this._deserialize(propertyValue);
+            });
         }
         else {
             return value;
@@ -65,60 +76,6 @@ class PluggableJSON {
 
     deserialize(value) {
         return this._deserialize(_.isObject(value) ? value : JSON.parse(value));
-    }
-
-    // If a serializer exists, serializes value into a string as follows
-    // "<serializer type><separator><serialized value>"
-    serializeValueInArray(value) {
-        let serializer = this.findSerializerForValue(value);
-
-        if (serializer) {
-            return `${this._escapeSeparators(serializer.type)}${this._separator}${this._escapeSeparators(serializer.serialize(value))}`;
-        }
-        else if (_.isString(value)) {
-            return this._escapeSeparators(value);
-        }
-        else {
-            return this._serialize(value);
-        }
-    }
-
-    // If a serializer exists, returns a serialized key and value
-    // key: "<original key><separator><serializer type>"
-    // value: "<serialized value>"
-    serializeValueInObject(key, value) {
-        let serializer = this.findSerializerForValue(value);
-        return serializer ?
-            [`${this._escapeSeparators(key)}${this._separator}${this._escapeSeparators(serializer.type)}`, serializer.serialize(value)]
-            : [this._escapeSeparators(key), this._serialize(value)];
-    }
-
-    deserializeValueInArray (value) {
-        if (_.isString(value)) {
-            let components = this._getComponentsFromSerializedString(value);
-            if (components.length === 1) {
-                return this._deserialize(components[0]);
-            }
-            else {
-                let [fieldType, fieldValue] = components;
-                return this._deserialize(fieldValue, fieldType);
-            }
-        }
-        else {
-            return this._deserialize(value);
-        }
-    }
-
-    deserializeValueInObject (key, value) {
-        let components = this._getComponentsFromSerializedString(key);
-
-        if (components.length === 1) {
-            return [components[0], this._deserialize(value)];
-        }
-        else {
-            let [fieldName, fieldType] = components;
-            return [fieldName,this._deserialize(value, fieldType)];
-        }
     }
 
     _validateSerializers(serializers) {
@@ -139,6 +96,10 @@ class PluggableJSON {
         return value.replace(regex, `${ESCAPE_CHAR}${this._separator}`);
     }
 
+    _unescapeSeparators(value) {
+        return value.replace(new RegExp(`${escapeRegexp(ESCAPE_CHAR)}${escapeRegexp(this._separator)}`, "g"), this._separator);
+    }
+
     findSerializerForValue(value) {
         return _.values(this._serializers).find((serializer) => {
             return serializer.isSerializable(value);
@@ -146,24 +107,29 @@ class PluggableJSON {
     }
 
     _getComponentsFromSerializedString(value) {
-        // The regex will split the value into an array of the following shape
-        // [<component>, <non-escape char>, <component>, <non-escape char>, ..., <component>]
-        // So go through the array and join each component with the following non-escaping char the regex captured.
-        return value.split(this._nonEscapedSeparator)
-        .reduce((result, item, i, array) => {
-            if (i % 2 === 1) {
-                return result.concat(`${array[i-1]}${array[i]}`);
-            }
-            else if (i === array.length - 1) {
-                return result.concat(item);
-            }
-            else {
-                return result;
-            }
-        }, [])
-        .map((item) => {
-            return item.replace(new RegExp(`${escapeRegexp(ESCAPE_CHAR)}${escapeRegexp(this._separator)}`, "g"), this._separator);
-        });
+        // If the value doesn't start with a separator,
+        // it is not serialized by one of the serializers
+        // so return without deserializing.
+        if (value.charAt(0) !== this._separator) {
+            return {
+                type: null,
+                value: this._unescapeSeparators(value)
+            };
+        }
+
+        // Find the index of the seaprator that separates
+        // the serializer type from the serialized value.
+        // + 1 because the returned index of `value.search`
+        // is the location of the non-escaping character
+        // before the separator we found.
+        let separatorIndex = value.search(this._nonEscapedSeparator) + 1;
+
+        return {
+            // Start at 1 to ignore the separator at the start of the value.
+            type: this._unescapeSeparators(value.substring(1, separatorIndex)),
+            // + 1 to ignore the separator itself
+            value: this._unescapeSeparators(value.substring(separatorIndex + 1))
+        };
     }
 }
 
