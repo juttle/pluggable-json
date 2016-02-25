@@ -28,7 +28,8 @@ class PluggableJSON {
 
         if (serializer) {
             // returns <separator><serializer.type><separator><serialized value>
-            return `${this._separator}${this._escapeSeparators(serializer.type)}${this._separator}${this._escapeSeparators(serializer.serialize(value))}`;
+            return this._separator + this._escapeSeparators(serializer.type) +
+                   this._separator + this._escapeSeparators(serializer.serialize(value));
         }
         else if (_.isArray(value)) {
             return value.map((item) => {
