@@ -2,6 +2,14 @@
 
 This file documents all notable changes to pluggable-json. The release numbering uses [semantic versioning](http://semver.org).
 
+## 0.2.1
+
+Released 2016-03-17
+
+### Bug Fixes
+
+- use _.find instead of native Array.prototype.find to improve compatibility with older browsers [[#9](https://github.com/juttle/pluggable-json/pull/9)]
+
 ## 0.2.0
 
 Released 2016-02-25
