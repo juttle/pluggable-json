@@ -101,7 +101,7 @@ class PluggableJSON {
     }
 
     findSerializerForValue(value) {
-        return _.values(this._serializers).find((serializer) => {
+        return _.find(_.values(this._serializers), (serializer) => {
             return serializer.isSerializable(value);
         });
     }
